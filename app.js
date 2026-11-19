@@ -227,10 +227,30 @@ if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged)
     }
   });
 }
-App.ready = App.load().then(async () => {
+const updateNotebookSyncState = App.updateSyncState;
+const notebookSyncButton = document.getElementById("sync-state");
+if (notebookSyncButton) notebookSyncButton.onclick = async () => {
+  if (!App.loaded || !App.syncConfigured()) return;
+  location.hash = "#data";
+  App.render();
+  await App.getSyncToken();
+  if (App.syncNeedsReconnect || !App.syncStatus || App.syncStatus === "未接続") {
+    if (await App.connectSync()) await App.syncNow();
+  }
+  App.updateSyncState();
+};
+App.updateSyncState = function () {
+  updateNotebookSyncState.call(this);
+  const section = document.getElementById("sync-section");
+  if (section) this.renderSyncSection(section);
+};
+App.ready = Promise.resolve().then(async () => {
+  await App.consumeSyncRedirect();
+  await App.load();
   if (App.loaded) await App.importAutoDeadlines();
   if (App.loaded) await App.importAutoMypages();
   await App.consumePendingImport();
+  if (App.loaded) await App.initSync();
 }).catch(error => {
   document.getElementById("message").textContent = "ページの受け渡しに失敗しました: " + error.message;
 });

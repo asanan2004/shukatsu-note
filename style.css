@@ -77,6 +77,12 @@ dialog::backdrop { background: #10251c66; }
 details > summary { cursor: pointer; padding: 10px 0; }
 #message:empty { display: none; } #message { background: #f4efe0; padding: 12px; white-space: pre-wrap; }
 #save-state { white-space: nowrap; font-size: 13px; }
+#sync-state { position: absolute; bottom: 8px; left: 28px; white-space: nowrap; font-size: 12px; color: var(--muted); }
+#sync-state[hidden] { display: none; }
+@media (max-width: 799px) {
+  #sync-state { position: static; }
+  .heading:has(#sync-state:not([hidden])) { flex-wrap: wrap; }
+}
 .popup { width: 340px; min-width: 340px; margin: 0; background: white; }
 .popup main { padding: 16px; }
 .popup h1 { font-size: 1.1rem; }

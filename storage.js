@@ -206,6 +206,7 @@ Object.assign(App, {
     try {
       const snapshot = JSON.parse(JSON.stringify(this.data));
       await chrome.storage.local.set({ data: snapshot });
+      if (typeof this.scheduleSyncAfterSave === "function") this.scheduleSyncAfterSave();
       ShukatsuShared.updateBadge(snapshot.deadlines);
       this.savedRevision = revision;
       retry = revision !== this.revision;
@@ -258,7 +259,52 @@ Object.assign(App, {
       this.message((automatic ? "自動の書き出しに失敗しました:" : "書き出しまたは日時の保存に失敗しました：") + error.message);
     }
   },
+  renderSyncSection(root) {
+    root.replaceChildren();
+    this.el("h3", "同期(Googleドライブ)", root);
+    if (!this.syncConfigured()) {
+      this.el("p", "同期の設定がまだです(クライアントIDが未設定)", root);
+      return;
+    }
+    this.el("p", "一度接続すると、次からは自動でつながります(Google にログインしたままのとき)。", root);
+    if (this.syncing && this.syncStatus === "同期中") {
+      this.el("p", "同期中…", root);
+      return;
+    }
+    if (this.syncNeedsReconnect || !this.syncStatus || this.syncStatus === "未接続") {
+      this.el("p", "この端末と、ほかの端末のデータを、あなたの Google ドライブの専用フォルダで揃えます。", root);
+      const connect = this.button(root, this.syncNeedsReconnect ? "Googleに再接続" : "Googleに接続", async () => {
+        connect.disabled = true;
+        try {
+          if (await this.connectSync()) await this.syncNow();
+        } catch (error) { this.message("同期できませんでした:" + error.message); }
+        finally { connect.disabled = false; this.updateSyncState(); }
+      });
+      if (this.syncLinked) this.button(root, "接続を解除", async () => {
+        await this.disconnectSync();
+        this.updateSyncState();
+      });
+      return;
+    }
+    const date = new Date(this.syncState?.lastSyncAt);
+    const pad = value => String(value).padStart(2, "0");
+    this.el("p", Number.isFinite(date.getTime())
+      ? `最後の同期: ${date.getMonth() + 1}/${date.getDate()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+      : "まだ同期していません", root);
+    this.button(root, "今すぐ同期", () => this.syncNow());
+    const disconnect = this.button(root, "接続を解除", async () => {
+      disconnect.disabled = true;
+      try { await this.disconnectSync(); }
+      catch (error) { this.message("接続を解除できませんでした:" + error.message); }
+      finally { disconnect.disabled = false; this.updateSyncState(); }
+    });
+  },
   renderData(root) {
+    if (typeof this.syncConfigured === "function") {
+      const sync = this.el("section", null, root, "card");
+      sync.id = "sync-section";
+      this.renderSyncSection(sync);
+    }
     this.dataOpen ||= {};
     const section = (name, state = "") => {
       const details = this.el("details", null, root, "data-section card");
@@ -399,7 +445,7 @@ Object.assign(App, {
       check();
     });
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      this.el("p", "就活のページらしいもの(締切・エントリー・選考などの言葉と日付があるページ)だけを読みます。文字は外に送りません。登録した締め切りには、根拠として、その行(200字まで)だけを保存します。", root, "muted note");
+      this.el("p", "就活のページらしいもの(締切・エントリー・選考などの言葉と日付があるページ)だけを読みます。Google ドライブとの同期のときだけ、Google と通信します。登録した締め切りには、根拠として、その行(200字まで)だけを保存します。", root, "muted note");
       const label = this.el("label", null, root);
       const checkbox = this.el("input", null, label);
       checkbox.type = "checkbox";
@@ -420,7 +466,7 @@ Object.assign(App, {
       };
     }
     root = notifications;
-    this.el("p", "メールでの通知は、このアプリが外部と通信しないため作っていません。Googleカレンダーなどでメール通知が欲しいときは、.ics書き出しを取り込んでください(前日の通知を付けて書き出します)", root, "muted note");
+    this.el("p", "Google ドライブとの同期のときだけ、Google と通信します。メールでの通知はありません。Googleカレンダーなどでメール通知が欲しいときは、.ics書き出しを取り込んでください(前日の通知を付けて書き出します)", root, "muted note");
     if (typeof chrome === "undefined" || !chrome.storage?.local) {
       this.el("p", "この環境では使えません", root, "muted");
       return;

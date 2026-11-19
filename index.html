@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src https://www.googleapis.com; object-src 'none'; base-uri 'none'">
   <title>就活ノート</title>
   <link rel="stylesheet" href="style.css">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,7 +15,7 @@
 </head>
 <body>
   <header>
-    <div class="heading"><h1>就活ノート</h1><span id="save-state" role="status">読込中</span></div>
+    <div class="heading"><h1>就活ノート</h1><span id="save-state" role="status">読込中</span><button id="sync-state" type="button" hidden></button></div>
     <input id="global-search" type="search" placeholder="すべてから検索" aria-label="すべてから検索">
     <nav aria-label="メイン"><a href="#today">今日</a><a href="#deadlines">締め切り</a><a href="#plans">予定</a><a href="#pipeline">選考</a><a href="#mypages">マイページ</a><a href="#gakuchika">ガクチカ</a><a href="#es">ES設問バンク</a><a href="#support">判断サポート</a><a href="#data">データ</a></nav>
   </header>
@@ -46,6 +46,8 @@
   <script src="today.js"></script>
   <script src="decisions.js"></script>
   <script src="support.js"></script>
+  <script src="sync-config.js"></script>
+  <script src="sync.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
