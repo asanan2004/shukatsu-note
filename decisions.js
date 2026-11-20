@@ -58,8 +58,10 @@ Object.assign(App, {
     return actions;
   },
   renderApplications(root, company) {
-    const section = this.el("section", null, root, "card applications");
-    this.el("h3", "応募別の管理・次の一手", section);
+    const section = this.isNarrow()
+      ? this.foldSection(root, "応募別の管理", "応募別の管理・次の一手", `${this.applicationItems(company).length}件`)
+      : this.companySection(root, "応募別の管理・次の一手", "", "card applications");
+    if (this.isNarrow()) section.className += " applications";
     this.button(section, "応募を追加", () => this.modal("応募を追加", parent => {
       const year = this.field(parent, "応募年度", String(new Date().getFullYear())); year.required = true; year.pattern = "[0-9]{4}";
       const track = this.field(parent, "応募区分", "本選考", "", ["本選考", "夏インターン", "冬インターン", "その他"]);

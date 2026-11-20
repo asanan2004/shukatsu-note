@@ -1,4 +1,44 @@
 "use strict";
+App.updateBottomTabs = function (route = "") {
+  const tabs = document.getElementById("bottom-tabs");
+  const sheet = document.getElementById("more-sheet");
+  if (!tabs || !sheet) return;
+  sheet.hidden = true;
+  tabs.replaceChildren();
+  const extra = [["mypages", "マイページ", "building"], ["gakuchika", "ガクチカ", "star"],
+    ["es", "ES設問バンク", "document"], ["support", "判断サポート", "scale"], ["data", "データ", "database"]];
+  const items = [["today", "今日", "check"], ["deadlines", "締め切り", "clock"],
+    ["plans", "予定", "calendar"], ["pipeline", "選考", "list"], ["more", "その他", "list"]];
+  items.forEach(([key, label, icon]) => {
+    const button = this.button(tabs, "", () => {
+      if (key === "more") {
+        sheet.hidden = !sheet.hidden;
+        button.setAttribute("aria-expanded", String(!sheet.hidden));
+      } else {
+        location.hash = "#" + key;
+        this.render();
+      }
+    });
+    if (typeof ShukatsuIcons !== "undefined") button.append(ShukatsuIcons.make(icon));
+    this.el("small", label, button);
+    if (key === route || (key === "more" && extra.some(([name]) => name === route))) button.setAttribute("aria-current", "page");
+    if (key === "more") {
+      button.setAttribute("aria-expanded", "false");
+      button.setAttribute("aria-controls", "more-sheet");
+    }
+  });
+  sheet.replaceChildren();
+  const list = this.el("div", null, sheet, "more-sheet-list");
+  extra.forEach(([key, label, icon]) => {
+    const button = this.button(list, label, () => { location.hash = "#" + key; this.render(); });
+    if (typeof ShukatsuIcons !== "undefined") button.prepend(ShukatsuIcons.make(icon));
+  });
+  sheet.onclick = event => {
+    if (event.target !== sheet) return;
+    sheet.hidden = true;
+    tabs.children[4].setAttribute("aria-expanded", "false");
+  };
+};
 if (typeof ShukatsuIcons !== "undefined") {
   const names = { "#today": "check", "#deadlines": "clock", "#plans": "calendar", "#pipeline": "list", "#mypages": "building", "#gakuchika": "star", "#es": "document", "#support": "scale", "#data": "database" };
   document.querySelectorAll("nav a").forEach(link => {
@@ -61,6 +101,7 @@ App.render = function () {
     catch { company = ""; }
   }
   const route = Object.prototype.hasOwnProperty.call(routes, requested) ? requested : "today";
+  this.updateBottomTabs(company === null ? route : "");
   const root = document.getElementById("view");
   root.replaceChildren();
   document.querySelectorAll("nav a").forEach(link => {
@@ -84,6 +125,7 @@ App.render = function () {
 
 App.renderGlobalSearch = function (query) {
   if (!this.loaded) { this.render(); return; }
+  this.updateBottomTabs();
   const root = document.getElementById("view");
   root.replaceChildren();
   document.querySelectorAll("nav a").forEach(link => link.removeAttribute("aria-current"));

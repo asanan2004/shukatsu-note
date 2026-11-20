@@ -19,16 +19,18 @@ Object.assign(App, {
     return common.concat(Object.hasOwn(extra, industry) ? extra[industry] : []);
   },
   renderResearch(parent, company) {
-    const section = this.el("section", null, parent);
-    this.el("h3", "企業研究", section);
     const record = this.companyRecord(company);
+    const section = this.companySection(parent, "企業研究");
+    const summaryCount = this.isNarrow() ? this.el("small", "", section.children[0], "muted") : null;
     const industry = this.field(section, "業界", record?.industry || "", "text", [{ value: "", label: "業界を選ぶ" }, ...this.industries]);
     industry.className = "research-industry";
     const labels = [...new Set([...this.researchItems(record?.industry || ""), ...(record?.research || []).map(item => item.label)])];
     const count = this.el("p", "", section);
     const updateCount = () => {
       const research = this.companyRecord(company)?.research || [];
-      count.textContent = `埋まった項目 ${labels.filter(label => research.some(item => item.label === label && item.text.trim())).length}/${labels.length}`;
+      const filled = labels.filter(label => research.some(item => item.label === label && item.text.trim())).length;
+      count.textContent = `埋まった項目 ${filled}/${labels.length}`;
+      if (summaryCount) summaryCount.textContent = `記入 ${filled}/${labels.length} 項目`;
     };
     updateCount();
     this.button(section, "全部をAIに頼む文をコピー", () => this.copy(`${company}について、就活の企業研究として次の項目を、出典つきで簡潔にまとめてください。\n` + labels.map(label => `- ${label}`).join("\n")));

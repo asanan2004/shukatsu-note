@@ -141,10 +141,9 @@ Object.assign(App, {
     });
   },
   renderWebtests(parent, company) {
-    const section = this.el("section", null, parent, "webtests");
-    this.el("h3", "Webテスト", section);
-    this.button(section, "＋ Webテストを記録", () => this.editWebtest(company));
     const items = this.companyRecord(company)?.webtests || [];
+    const section = this.companySection(parent, "Webテスト", `${items.length}件・未受験 ${items.filter(item => !item.done).length}`, "webtests");
+    this.button(section, "＋ Webテストを記録", () => this.editWebtest(company));
     [...items].sort((a, b) => b.date.localeCompare(a.date)).forEach(item => {
       const card = this.el("article", null, section, "card webtest-card");
       const meta = this.el("div", null, card, "deadline-meta");

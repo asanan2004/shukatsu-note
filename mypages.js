@@ -152,6 +152,26 @@ Object.assign(App, {
       const actions = this.el("div", null, meta, "deadline-actions");
       this.button(actions, "編集", () => this.editMypage(item));
       if (item.note) this.el("p", item.note, content, "pre");
+      if (this.isNarrow()) {
+        const label = meta.querySelector(".mypage-status");
+        const compactHeading = this.el("div", null, null, "mypage-compact-heading");
+        compactHeading.append(heading, label);
+        const host = this.el("span", "URL未登録");
+        try {
+          const parsed = new URL(item.url);
+          if (["http:", "https:"].includes(parsed.protocol)) {
+            host.textContent = "";
+            const link = this.el("a", parsed.hostname, host);
+            link.href = parsed.href;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+          } else host.textContent = "URLを確認してください";
+        } catch { if (item.url) host.textContent = "URLを確認してください"; }
+        const avatar = row.querySelector(".avatar");
+        if (avatar) content.prepend(avatar);
+        const more = this.compactCard(row, { line1: [compactHeading], line2: [host], key: "mypage-" + item.id });
+        more.append(content);
+      }
     });
   }
 });

@@ -52,8 +52,9 @@ Object.assign(App, {
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key).push(name);
       });
-      const funnel = this.el("div", null, results, "funnel");
-      this.el("h3", "通過率", funnel);
+      const rates = this.isNarrow() ? this.foldSection(results, "pipeline-rates", "通過率", `応募 ${totals[0].reached}社`) : results;
+      const funnel = this.el("div", null, rates, "funnel");
+      if (!this.isNarrow()) this.el("h3", "通過率", funnel);
       const stageLabel = stage => stage === "面接1" ? "一次面接" : stage === "面接2" ? "二次面接" : stage;
       const percent = rate => rate === null ? "—" : rate + "%";
       if (totals[0].reached) {
@@ -115,8 +116,17 @@ Object.assign(App, {
         const companies = visible.filter(name => label === "不合格・辞退"
           ? ["不合格", "辞退"].includes(this.companyStage(name)) : this.companyStage(name) === label)
           .sort((a, b) => this.companyPinOrder(a, b));
-        const col = this.el("div", null, board, "board-col");
-        this.el("h3", label + " (" + companies.length + "件)", col);
+        let col;
+        if (this.isNarrow()) {
+          const key = "board-" + label;
+          this.foldOpen ||= {};
+          if (!Object.prototype.hasOwnProperty.call(this.foldOpen, key)) this.foldOpen[key] = companies.length > 0;
+          col = this.foldSection(board, key, label + "(" + companies.length + "件)");
+          col.className += " board-col";
+        } else {
+          col = this.el("div", null, board, "board-col");
+          this.el("h3", label + " (" + companies.length + "件)", col);
+        }
         if (!companies.length) this.el("p", "なし", col, "muted");
         const list = this.el("div", null, col, "board-cards");
         companies.forEach(name => {
@@ -124,26 +134,30 @@ Object.assign(App, {
           const heading = this.el("div", null, card, "board-card-head");
           this.companyAvatar(heading, name);
           this.companyLink(heading, name);
-          this.companyPinButton(heading, name);
           const rank = this.companyRecord(name)?.rank;
-          if (rank) this.el("span", rank, card, "label rank-" + rank);
-          if (this.companyRecord(name)?.intern) this.el("span", "インターン", card, "label");
+          if (this.isNarrow() && rank) this.el("span", rank, heading, "label rank-" + rank);
+          this.companyPinButton(heading, name);
+          if (!this.isNarrow() && rank) this.el("span", rank, card, "label rank-" + rank);
+          const secondary = this.isNarrow() ? this.el("div") : card;
           const documentsLeft = (this.companyRecord(name)?.documents || []).filter(item => item.done === false).length;
-          if (documentsLeft) this.el("small", `書類 残り${documentsLeft}`, card);
+          if (!this.isNarrow() && documentsLeft) this.el("small", `書類 残り${documentsLeft}`, card);
           const next = ShukatsuShared.activeDeadlines(this.data.deadlines.filter(item => item.company === name))[0];
           if (next) {
             const remaining = this.remaining(next);
             const date = next.dueAt.slice(0, 10).split("-");
             const time = next.dueAt.length > 10 ? " " + next.dueAt.slice(11, 16) : "";
-            this.el("p", `次:${Number(date[1])}/${Number(date[2])}${time} ${next.kind}(${remaining.text})`, card, remaining.expired ? "danger" : "muted");
+            this.el(this.isNarrow() ? "span" : "p", `次:${Number(date[1])}/${Number(date[2])}${time} ${next.kind}(${remaining.text})`, secondary, remaining.expired ? "danger" : "muted");
           }
-          const stage = this.el("select", null, card);
+          if (this.isNarrow() && documentsLeft) this.el("small", `書類 残り${documentsLeft}`, secondary);
+          const detail = this.isNarrow() ? this.compactCard(card, { line1: [heading], line2: [secondary], key: "pipeline-" + name }) : card;
+          if (this.companyRecord(name)?.intern) this.el("span", "インターン", detail, "label");
+          const stage = this.el("select", null, detail);
           stage.setAttribute("aria-label", "選考ステージ");
           this.stages.forEach(value => { this.el("option", value, stage).value = value; });
           stage.value = this.companyStage(name);
-          this.renderStageDetail(card, this.companyRecord(name)?.stageDetail, stage.value,
+          this.renderStageDetail(detail, this.companyRecord(name)?.stageDetail, stage.value,
             detail => { this.setCompanyStageDetail(name, detail); this.render(); });
-          this.el("p", this.stageLabel(stage.value, this.companyRecord(name)?.stageDetail), card, "muted stage-label");
+          this.el("p", this.stageLabel(stage.value, this.companyRecord(name)?.stageDetail), detail, "muted stage-label");
           stage.onchange = () => {
             const advanced = this.stages.indexOf(stage.value) > this.stages.indexOf(this.companyStage(name))
               && !["不合格", "辞退"].includes(stage.value);

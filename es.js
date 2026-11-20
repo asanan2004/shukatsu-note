@@ -446,7 +446,15 @@ Object.assign(App, {
     const head = this.el("div", null, root, "page-head");
     this.el("h2", "ES設問バンク", head);
     this.button(head, "＋ 設問を追加", () => this.editQuestion());
-    const tools = this.el("div", null, root, "toolbar");
+    const disclosure = (label, key) => {
+      if (!this.isNarrow()) return this.el("div", null, root, "toolbar");
+      const box = this.el("details", null, root, "es-disclosure");
+      box.open = !!this[key];
+      this.el("summary", label, box);
+      box.addEventListener("toggle", () => { this[key] = box.open; });
+      return this.el("div", null, box, "toolbar");
+    };
+    const tools = disclosure("操作", "esToolsOpen");
     this.button(tools, "貼り付け登録", () => this.pasteQuestions());
     this.button(tools, "ジャンルを見直す", () => this.reviewGenres());
     this.button(tools, "ジャンルを追加", () => {
@@ -465,7 +473,8 @@ Object.assign(App, {
       this.genreSort = !this.genreSort;
       this.render();
     });
-    const filters = this.el("div", null, root, "toolbar");
+    const filterCount = Object.values(this.esFilter).filter(Boolean).length;
+    const filters = disclosure("絞り込み" + (filterCount ? `(${filterCount})` : ""), "esFilterOpen");
     [["ジャンル", "genre", [{ label: "すべて", value: "" }, ...this.allGenres()]],
       ["企業名検索", "company", null], ["全文検索（設問・回答）", "text", null]].forEach(([label, key, options]) => {
       const field = this.field(filters, label, this.esFilter[key], "text", options);

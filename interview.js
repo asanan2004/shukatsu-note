@@ -151,8 +151,7 @@ Object.assign(App, {
     });
   },
   renderMeetings(parent, company) {
-    const section = this.el("section", null, parent, "meetings");
-    this.el("h3", "説明会・OB訪問", section);
+    const section = this.companySection(parent, "説明会・OB訪問", `${(this.companyRecord(company)?.meetings || []).length}件`, "meetings");
     this.button(section, "＋ 記録を追加", () => this.editMeeting(company));
     const record = this.companyRecord(company), items = record?.meetings || [];
     [...items].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt)).forEach(item => {
@@ -196,8 +195,7 @@ Object.assign(App, {
     });
   },
   renderInterviews(parent, company) {
-    const section = this.el("section", null, parent, "interviews");
-    this.el("h3", "面接ログ", section);
+    const section = this.companySection(parent, "面接ログ", `${(this.companyRecord(company)?.interviews || []).length}件`, "interviews");
     this.button(section, "＋ 面接ログを追加", () => this.editInterview(company));
     const logs = this.companyRecord(company)?.interviews || [];
     [...logs].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt)).forEach(log => {

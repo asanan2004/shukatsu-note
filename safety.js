@@ -56,8 +56,8 @@ Object.assign(App, {
   },
   commonDocuments: ["成績証明書", "卒業見込証明書", "履歴書", "証明写真", "健康診断書", "ES", "作品/ポートフォリオ"],
   renderDocuments(parent, company) {
-    const section = this.el("section", null, parent, "documents");
-    this.el("h3", "提出物", section);
+    const documents = this.companyRecord(company)?.documents || [];
+    const section = this.companySection(parent, "提出物", `済 ${documents.filter(item => item.done).length}/${documents.length}`, "documents");
     const save = () => {
       this.companyRecord(company, true).updatedAt = this.now();
       this.changed();

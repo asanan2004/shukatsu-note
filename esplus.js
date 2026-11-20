@@ -46,8 +46,9 @@ Object.assign(App, {
     return first + (work ? (first ? "そのために" : "") + work : "") + why;
   },
   renderMotive(parent, company) {
-    this.el("h3", "志望動機", parent);
-    const section = this.el("div", null, parent, "card");
+    const container = this.isNarrow() ? this.foldSection(parent, "志望動機", "志望動機") : parent;
+    if (!this.isNarrow()) this.el("h3", "志望動機", parent);
+    const section = this.el("div", null, container, "card");
     const motive = this.companyRecord(company)?.motive || {};
     const inputs = {};
     const read = () => Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.value]));

@@ -1,5 +1,15 @@
 "use strict";
 Object.assign(App, {
+  companySection(parent, title, extra = "", className = "") {
+    if (this.isNarrow()) {
+      const section = this.foldSection(parent, title, title, extra);
+      if (className) section.className += " " + className;
+      return section;
+    }
+    const section = this.el("section", null, parent, className);
+    this.el("h3", title, section);
+    return section;
+  },
   stages: ["未応募", "ES", "Webテスト", "面接1", "面接2", "最終", "内定", "不合格", "辞退"],
   ranks: ["S", "A", "B", "C"],
   stageDetailOptions(stage) {
@@ -272,7 +282,10 @@ Object.assign(App, {
       next.className += " muted";
       this.el("span", "なし(締め切りか予定を追加してください)", next);
     }
-    const meta = this.el("div", null, root, "company-meta");
+    const metaParent = this.isNarrow()
+      ? this.foldSection(root, "company-meta", "選考の状態・志望度",
+        this.stageLabel(this.companyStage(company), this.companyRecord(company)?.stageDetail)) : root;
+    const meta = this.el("div", null, metaParent, "company-meta");
     const stage = this.field(meta, "選考ステージ", this.companyStage(company), "", this.stages);
     this.renderStageDetail(meta, this.companyRecord(company)?.stageDetail, stage.value,
       detail => { this.setCompanyStageDetail(company, detail); this.render(); });
@@ -308,7 +321,7 @@ Object.assign(App, {
     const history = this.companyRecord(company)?.stageHistory;
     if (history?.length) this.el("span", history.map(item =>
       item.stage + " " + Number(item.date.slice(5, 7)) + "/" + Number(item.date.slice(8, 10))).join(" → "), meta, "muted");
-    this.renderRejection(root, company);
+    this.renderRejection(metaParent, company);
     const records = this.companyRecords(company);
     const unfinished = records.deadlines.filter(item => ["未着手", "進行中"].includes(item.status)).length;
     this.el("p", `未完了の締め切り${unfinished}件・マイページ${records.mypages.length}件・ES回答${records.answers.length}件`, root, "muted note");
@@ -377,14 +390,18 @@ Object.assign(App, {
       this.renderChecklist(card, item);
       if (item.note) this.el("p", item.note, card, "pre");
     });
-    if (records.answers.length) this.el("h3", "提出したES", root);
+    const answers = records.answers.length && this.isNarrow()
+      ? this.foldSection(root, "提出したES", "提出したES") : root;
+    if (records.answers.length && !this.isNarrow()) this.el("h3", "提出したES", root);
     records.answers.forEach(({ question, answer }) => {
-      const card = this.el("article", null, root, "card");
+      const card = this.el("article", null, answers, "card");
       this.el("h4", question.question, card); this.el("p", answer.text, card, "pre");
       this.el("p", `${this.count(answer.text)}字 · ${answer.date}`, card); this.button(card, "コピー", () => this.copy(answer.text));
     });
-    if (records.episodes.length) this.el("h3", "ガクチカの使用記録", root);
-    records.episodes.forEach(({ episode, use }) => this.el("p", `${episode.title} · ${use.date}`, root, "card"));
+    const episodes = records.episodes.length && this.isNarrow()
+      ? this.foldSection(root, "ガクチカの使用記録", "ガクチカの使用記録") : root;
+    if (records.episodes.length && !this.isNarrow()) this.el("h3", "ガクチカの使用記録", root);
+    records.episodes.forEach(({ episode, use }) => this.el("p", `${episode.title} · ${use.date}`, episodes, "card"));
     this.renderWebtests(root, company);
     this.renderInterviews(root, company);
     this.renderMeetings(root, company);

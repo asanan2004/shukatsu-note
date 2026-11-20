@@ -1,5 +1,41 @@
 "use strict";
 const App = {
+  isNarrow() {
+    return !!(window.matchMedia && window.matchMedia("(max-width: 599px)").matches);
+  },
+  foldSection(parent, key, title, summaryExtra = "") {
+    const section = this.el("details", null, parent, "fold-section");
+    section.setAttribute("data-key", key);
+    this.foldOpen ||= {};
+    section.open = Object.prototype.hasOwnProperty.call(this.foldOpen, key) ? this.foldOpen[key] : !this.isNarrow();
+    const summary = this.el("summary", title, section);
+    if (summaryExtra) this.el("small", summaryExtra, summary, "muted");
+    section.addEventListener("toggle", () => { this.foldOpen[key] = section.open; });
+    return section;
+  },
+  compactCard(card, { line1, line2, key }) {
+    card.className += " compact-card";
+    const main = this.el("div", null, card, "card-main");
+    const first = this.el("div", null, main, "card-line1");
+    line1.forEach(node => first.append(node));
+    const second = this.el("div", null, main, "card-line2");
+    line2.forEach(node => second.append(node));
+    const more = this.el("div", null, card, "card-more");
+    this.expandedCards ||= new Set();
+    const update = () => {
+      const open = this.expandedCards.has(key);
+      card.className = card.className.replace(/\s+expanded\b/g, "") + (open ? " expanded" : "");
+      toggle.setAttribute("aria-expanded", String(open));
+    };
+    const toggle = this.button(first, "詳細", () => {
+      if (this.expandedCards.has(key)) this.expandedCards.delete(key);
+      else this.expandedCards.add(key);
+      update();
+    });
+    toggle.className = "card-toggle";
+    update();
+    return more;
+  },
   data: { version: 1, deadlines: [], gakuchika: [], esQuestions: [] },
   genres: ["志望動機", "自己PR", "ガクチカ", "長所・短所", "挫折経験", "将来像", "研究・ゼミ", "その他"],
   kinds: ["ES", "Webテスト", "面接", "説明会", "インターン応募", "その他"],

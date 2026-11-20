@@ -200,7 +200,8 @@ Object.assign(App, {
       || (a.time || "").localeCompare(b.time || ""));
     const deadlines = this.planShowDeadlines ? this.data.deadlines.filter(item => matches(item)
       && this.scheduleKinds.includes(item.kind) && ["未着手", "進行中"].includes(item.status)) : [];
-    const grid = this.el("div", null, root, "grid plan-calendar");
+    const calendar = this.isNarrow() ? this.foldSection(root, "plan-calendar", "月のカレンダー") : root;
+    const grid = this.el("div", null, calendar, "grid plan-calendar");
     ["日", "月", "火", "水", "木", "金", "土"].forEach(day => this.el("div", day, grid, "weekday"));
     const year = this.planMonth.getFullYear();
     const month = this.planMonth.getMonth();
@@ -240,6 +241,22 @@ Object.assign(App, {
     if (!upcoming.length) this.el("p", "これからの予定はありません。", root);
     upcoming.forEach(item => {
       const row = this.el("div", null, root, "plan-row");
+      if (this.isNarrow()) {
+        const date = new Date(item.start + "T00:00");
+        const heading = this.el("strong", `${date.getMonth() + 1}/${date.getDate()}(${"日月火水木金土"[date.getDay()]})${item.time ? " " + item.time : ""} ${item.title}`);
+        const meta = this.el("span", `${item.company}・${item.kind}・${item.status === "確定" ? "確定" : "仮"}`);
+        const checklist = item.checklist || [];
+        const preparation = this.el("span", `準備 ${checklist.filter(entry => entry.done).length}/${checklist.length}`);
+        const more = this.compactCard(row, { line1: [heading], line2: [meta, preparation], key: "plan-" + item.id });
+        this.el("span", this.planDateLabel(item), more);
+        this.button(more, "編集", () => this.editPlan(item));
+        if (item.status === "通過したら") this.button(more, "確定にする", () => this.offerPlanAfterPass(item.company));
+        this.button(more, "削除", () => this.remove(this.data.plans, item));
+        if (item.options) this.el("small", item.options.map((option, index) =>
+          `候補${index + 1} ${this.planDateLabel(option)}`).join(" / "), this.el("div", null, more, "checklist"), "muted");
+        this.renderChecklist(more, item);
+        return;
+      }
       this.el("span", this.planDateLabel(item), row);
       this.el("span", item.status, row, "label");
       this.el("span", `${item.kind} ${item.company} ${item.title}`, row);

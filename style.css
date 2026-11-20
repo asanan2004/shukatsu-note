@@ -587,6 +587,33 @@ body.sidepanel .toolbar, body.sidepanel .actions { gap: 5px; margin-block: 6px; 
 .es-paste-pair { border: 1px solid var(--border, #dbe1e8); border-radius: 8px; padding: 12px; margin-block: 10px; overflow-wrap: anywhere; }
 .es-paste-pair p { margin-block: 6px; }
 
+/* Stage 51 CH1-CH4: compact schedule, pipeline, mypages and ES controls. */
+.fold-section > summary { cursor: pointer; font-weight: 700; }
+.fold-section > summary > small { margin-left: 8px; font-weight: 400; }
+@media (width < 600px) {
+  body .compact-card { display: block; padding: 8px 10px; margin-block: 6px; }
+  .compact-card > .card-main { min-width: 0; }
+  body .compact-card .card-toggle { display: inline-flex; flex-shrink: 0; min-height: 28px; height: 28px; margin: 0; padding: 2px 8px; font-size: 12px; }
+  .compact-card:not(.expanded) > .card-more { display: none; }
+  .compact-card.expanded > .card-more { display: block; margin-top: 8px; }
+  .compact-card .card-line1 > strong,
+  .compact-card .card-line1 > .board-card-head,
+  .compact-card .card-line1 > .mypage-compact-heading { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 15px; }
+  .compact-card .board-card-head, .mypage-compact-heading { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; }
+  body .compact-card .card-line1 .company-link { min-height: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .compact-card .card-line1 .company-avatar { width: 24px; height: 24px; flex-shrink: 0; }
+  .compact-card .card-line1 .label { flex-shrink: 0; margin: 0; }
+  body .compact-card .card-line1 button[aria-pressed] { min-height: 24px; height: 24px; padding: 0 4px; flex-shrink: 0; }
+  body .mypage-compact-heading h3 { margin: 0; min-width: 0; font-size: 15px; overflow: hidden; }
+  .compact-card .card-line2 > div { display: inline; }
+  .compact-card .card-line2 small { margin-left: 6px; }
+  .board:has(> .fold-section) { display: flex; flex-direction: column; gap: 8px; }
+  .board > .fold-section > .board-cards { display: block; }
+  .board > .fold-section > summary { margin-bottom: 4px; }
+  .fold-section, .es-disclosure { margin-block: 6px; }
+  .fold-section > summary, .es-disclosure > summary { padding-block: 6px; cursor: pointer; }
+}
+
 /* Stage 50 CD/CE: shared card structure, compact phone controls. */
 .card-line1 { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .card-line1 > h3 { flex: 1; min-width: 0; margin: 0; }
@@ -600,6 +627,38 @@ body .card .card-title { display: block; min-height: 0; padding: 0; margin: 0; b
   .deadline-disclosure:not([open]) > .toolbar { display: flex; }
   .card-toggle { display: none; }
   .card-more { display: block; }
+}
+
+.bottom-tabs, .more-sheet { display: none; }
+.fold-section > summary { cursor: pointer; font-size: 18px; font-weight: 700; margin-block: 18px; }
+.fold-section > summary small { margin-left: 8px; font-size: 13px; font-weight: 400; }
+
+/* Stage 51: phone sections and navigation. */
+@media (width < 600px) {
+  body > header nav { display: none; }
+  body:has(> .bottom-tabs) main { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .bottom-tabs { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; background: var(--surface, #fff); border-top: 1px solid var(--border, #ddd); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .bottom-tabs > button { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 2px; border: 0; margin: 0; padding: 8px 2px; min-width: 0; border-radius: 0; }
+  .bottom-tabs small { font-size: 11px; }
+  .bottom-tabs [aria-current="page"] { color: var(--primary, #264b8c); background: var(--primary-soft, #e8efff); font-weight: 700; }
+  .more-sheet:not([hidden]) { display: flex; align-items: end; position: fixed; inset: 0 0 calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 19; background: #0005; }
+  .more-sheet-list { display: grid; width: 100%; padding: 12px; background: var(--surface, #fff); border-radius: 16px 16px 0 0; }
+  body:has(dialog[open]) .bottom-tabs, body:has(dialog[open]) .more-sheet { display: none; }
+  .fold-section > summary { margin-block: 8px; padding-block: 6px; font-size: 15px; }
+  .board { display: flex; flex-direction: column; }
+  .board > .board-col { width: 100%; min-width: 0; }
+  body .compact-card { display: block; padding: 8px 10px; margin-block: 6px; }
+  .compact-card:not(.expanded) > .card-more { display: none; }
+  .compact-card.expanded > .card-more { display: block; margin-top: 8px; }
+  .compact-card .card-line1 { display: flex; align-items: center; }
+  .compact-card .card-line1 > :first-child { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 15px; }
+  .compact-card .board-card-head, .compact-card .mypage-heading { display: flex; flex-wrap: nowrap; gap: 4px; margin: 0; }
+  body .compact-card .card-toggle { display: inline-flex; min-height: 28px; height: 28px; margin: 0; padding: 2px 8px; font-size: 12px; }
+  .compact-card .card-line2 > div { display: inline; }
+  body .compact-card .company-link { min-height: 0; padding: 0; }
+}
+@media (min-width: 600px) {
+  .bottom-tabs, .more-sheet { display: none; }
 }
 
 /* Stage 47 BU: keep all phone adjustments below 600px. */
