@@ -587,6 +587,21 @@ body.sidepanel .toolbar, body.sidepanel .actions { gap: 5px; margin-block: 6px; 
 .es-paste-pair { border: 1px solid var(--border, #dbe1e8); border-radius: 8px; padding: 12px; margin-block: 10px; overflow-wrap: anywhere; }
 .es-paste-pair p { margin-block: 6px; }
 
+/* Stage 50 CD/CE: shared card structure, compact phone controls. */
+.card-line1 { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.card-line1 > h3 { flex: 1; min-width: 0; margin: 0; }
+body .card .card-title { display: block; min-height: 0; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: left; box-shadow: none; }
+.card-toggle, .stat-short-label { display: none; }
+.card-more { display: block; }
+.card-more > .deadline-actions { margin-top: 8px; }
+@media (min-width: 600px) {
+  .deadline-disclosure > summary { display: none; }
+  .deadline-disclosure::details-content { display: block; content-visibility: visible; }
+  .deadline-disclosure:not([open]) > .toolbar { display: flex; }
+  .card-toggle { display: none; }
+  .card-more { display: block; }
+}
+
 /* Stage 47 BU: keep all phone adjustments below 600px. */
 @media (width < 600px) {
   /* Override compact toolbar, board and dialog field font sizes. */
@@ -645,4 +660,33 @@ body.sidepanel .toolbar, body.sidepanel .actions { gap: 5px; margin-block: 6px; 
     padding-right: calc(12px + env(safe-area-inset-right, 0px));
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
+}
+
+@media (width < 600px) {
+  body .deadline-card { padding: 8px 10px; margin-block: 6px; }
+  body h3.today-section-heading, body .today-group > h3 { margin-top: 14px; margin-bottom: 6px; }
+  body .deadline-card.bulk-card { padding-left: 48px; }
+  .card-line1 { gap: 6px; height: 28px; }
+  .card-line1 > .label { flex-shrink: 0; margin: 0; }
+  body .card-line1 > h3 { font-size: 15px; font-weight: 700; line-height: 24px; }
+  body .card .card-title { width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body .card .card-toggle { display: inline-flex; flex-shrink: 0; min-height: 28px; height: 28px; margin: 0; padding: 2px 8px; font-size: 12px; }
+  .card-line2 { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: var(--muted); line-height: 22px; }
+  .card-line2 > * { margin-right: 6px; vertical-align: middle; }
+  .card-line2 > .company-avatar { display: none; }
+  body .card .card-line2 .company-link { display: inline; min-height: 0; padding: 0; }
+  .deadline-card:not(.expanded) > .card-more { display: none; }
+  .deadline-card.expanded > .card-more { display: block; margin-top: 8px; }
+  .deadline-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-block: 4px; }
+  body .deadline-stats > .stat { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 2px; margin: 0; min-height: 32px; white-space: nowrap; }
+  .deadline-stats .stat-full-label { display: none; }
+  .deadline-stats .stat-short-label { display: inline; font-size: 11px; }
+  .deadline-stats strong { font-size: 14px; }
+  body main:has(.deadline-stats) .page-head { margin-bottom: 8px; }
+  main:has(.deadline-stats) :is(.conflicts, .submissions-todo, .deadline-disclosure, .deadline-group) { margin-block: 4px; }
+  main:has(.deadline-stats) .conflicts { padding-block: 4px; }
+  main:has(.deadline-stats) :is(.conflicts, .submissions-todo, .deadline-disclosure, .deadline-group) > summary,
+  main:has(.deadline-stats) > details > summary { margin-block: 4px; padding-block: 4px; font-size: 14px; }
+  main:has(.deadline-stats) .group-head { margin-block: 4px; }
+  .deadline-disclosure > summary { cursor: pointer; }
 }

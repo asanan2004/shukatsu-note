@@ -288,19 +288,49 @@ Object.assign(App, {
         this.render();
       };
     }
-    this.el("h3", item.title, card);
-    const meta = this.el("div", null, card, "deadline-meta");
+    card.className += " deadline-card";
+    this.expandedCards ||= new Set();
+    // The recommended card and the same deadline in a list open independently.
+    const isNext = (parent.className || "").split(/\s+/).includes("next-task");
+    const expandedCards = isNext ? (this.expandedNextCards ||= new Set()) : this.expandedCards;
+    const main = this.el("div", null, card, "card-main");
+    const line1 = this.el("div", null, main, "card-line1");
+    this.el("span", remaining.text, line1, "label " + (remaining.expired ? "expired" : remaining.days <= 1 ? "urgent" : ""));
+    const title = this.el("h3", null, line1);
+    const toggleExpanded = () => {
+      if (expandedCards.has(item.id)) expandedCards.delete(item.id);
+      else expandedCards.add(item.id);
+      updateExpanded();
+    };
+    const titleButton = this.button(title, item.title, toggleExpanded);
+    titleButton.className = "card-title";
+    const toggle = this.button(line1, "詳細", toggleExpanded);
+    toggle.className = "card-toggle";
+    const updateExpanded = () => {
+      const expanded = expandedCards.has(item.id);
+      card.className = card.className.split(/\s+/).filter(name => name !== "expanded").join(" ") + (expanded ? " expanded" : "");
+      toggle.setAttribute("aria-expanded", String(expanded));
+      titleButton.setAttribute("aria-expanded", String(expanded));
+    };
+    if (isNext && !this.initialNextCards?.has(item.id)) {
+      (this.initialNextCards ||= new Set()).add(item.id);
+      expandedCards.add(item.id);
+    }
+    updateExpanded();
+    const meta = this.el("div", null, main, "deadline-meta card-line2");
     this.companyAvatar(meta, item.company).className += " small";
     this.companyLink(meta, item.company).className = "company-link";
+    const due = new Date(item.dueAt.slice(0, 10) + "T00:00");
+    this.el("span", `${due.getMonth() + 1}/${due.getDate()}${item.dueAt.length > 10 ? " " + item.dueAt.slice(11, 16) : ""}`, meta, "card-date");
     this.el("span", item.kind, meta, "label kind-" + this.kinds.indexOf(item.kind));
     if (!remaining.expired && this.findConflicts(this.data.deadlines).some(pair => pair.a === item || pair.b === item)) {
       this.el("span", "日程が近い", meta, "label conflict");
     }
     if (item.source === "auto") this.el("span", "自動", meta, "label auto");
     this.checklistLabel(meta, item);
-    this.el("span", remaining.text, meta, "label " + (remaining.expired ? "expired" : remaining.days <= 1 ? "urgent" : ""));
-    this.el("span", `${item.dueAt.replace("T", " ")} · ${item.status}`, meta);
-    const actions = this.el("div", null, meta, "deadline-actions");
+    const more = this.el("div", null, card, "card-more");
+    this.el("span", `${item.dueAt.replace("T", " ")} · ${item.status}`, more);
+    const actions = this.el("div", null, more, "deadline-actions");
     const deadlineLink = this.deadlineLinkFor(item);
     if (deadlineLink) {
       const link = this.el("a", deadlineLink.label, actions, "button-link");
@@ -327,7 +357,7 @@ Object.assign(App, {
     this.button(actions, "編集", () => this.editDeadline(item));
     this.button(actions, "削除", () => this.remove(this.data.deadlines, item));
     if (item.url) {
-      const row = this.el("p", null, card, "deadline-url muted");
+      const row = this.el("p", null, more, "deadline-url muted");
       let isWebUrl = false;
       try { isWebUrl = ["http:", "https:"].includes(new URL(item.url).protocol); } catch {}
       if (isWebUrl) {
@@ -335,13 +365,13 @@ Object.assign(App, {
         link.href = item.url; link.target = "_blank"; link.rel = "noopener noreferrer";
       } else row.textContent = item.url;
     }
-    this.renderChecklist(card, item);
-    if (item.note) this.el("p", item.note, card, "pre");
+    this.renderChecklist(more, item);
+    if (item.note) this.el("p", item.note, more, "pre");
     const draft = this.draftDate(item);
     if (["未着手", "進行中"].includes(item.status) && draft) {
       const date = new Date(draft + "T00:00");
       const today = now || new Date();
-      this.el("small", `下書きの目安:${date.getMonth() + 1}/${date.getDate()}`, card,
+      this.el("small", `下書きの目安:${date.getMonth() + 1}/${date.getDate()}`, more,
         date <= new Date(today.getFullYear(), today.getMonth(), today.getDate()) ? "danger" : "");
     }
     return card;
@@ -352,7 +382,7 @@ Object.assign(App, {
     this.button(head, "＋ 締め切りを追加", () => this.editDeadline()).className = "primary";
     const now = new Date();
     const all = ShukatsuShared.activeDeadlines(this.data.deadlines);
-    const stats = this.el("div", null, root, "stats");
+    const stats = this.el("div", null, root, "stats deadline-stats");
     [["期限切れ", "expired"], ["今日・明日", "soon1"], ["7日以内", "week"],
       ["未着手・進行中の合計", ""]].forEach(([label, quick], index) => {
       const count = quick ? all.filter(d => this.matchesDeadlineQuick(d, quick, now)).length : all.length;
@@ -362,7 +392,8 @@ Object.assign(App, {
       });
       card.className = "card stat";
       card.setAttribute("aria-pressed", String(this.deadlineQuick === quick));
-      this.el("span", label, card);
+      this.el("span", label, card, "stat-full-label");
+      this.el("span", ["期限切れ", "今日明日", "7日", "合計"][index], card, "stat-short-label");
       this.el("strong", count, card, index === 0 && count ? "danger" : "");
     });
     const conflicts = this.findConflicts(this.data.deadlines).filter(({ a, b }) => !(this.remaining(a, now).expired && this.remaining(b, now).expired));
@@ -422,7 +453,14 @@ Object.assign(App, {
         });
       });
     }
-    const tools = this.el("div", null, root, "toolbar");
+    const disclosure = (label, key) => {
+      const box = this.el("details", null, root, "deadline-disclosure");
+      box.open = !!this[key];
+      this.el("summary", label, box);
+      box.addEventListener("toggle", () => { this[key] = box.open; });
+      return this.el("div", null, box, "toolbar");
+    };
+    const tools = disclosure("操作", "deadlineToolsOpen");
     const bulkBar = this.deadlineSelection ? this.el("div") : null;
     if (bulkBar) {
       const bar = bulkBar;
@@ -439,7 +477,8 @@ Object.assign(App, {
       const items = this.filteredDeadlines().filter(d => !this.calendar || d.dueAt.startsWith(this.monthKey()));
       this.exportICS(items);
     });
-    const filters = this.el("div", null, root, "toolbar");
+    const filterCount = Object.values(this.deadlineFilter).filter(Boolean).length + (this.deadlineQuick ? 1 : 0);
+    const filters = disclosure("絞り込み" + (filterCount ? `(${filterCount})` : ""), "deadlineFilterOpen");
     this.button(tools, "まとめて操作", () => { this.deadlineSelection = new Set(); this.calendar = false; this.render(); });
     [["状態", "status", this.statuses], ["種別", "kind", this.kinds], ["企業名検索", "company", null],
       ["入り方", "source", [{ label: "自動で入ったもの", value: "auto" }]]].forEach(([label, key, options]) => {

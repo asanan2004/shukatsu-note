@@ -62,14 +62,15 @@ Object.assign(App, {
   todayTaskCard(parent, item, now, recommended = false) {
     const card = this.deadlineCard(parent, item, now);
     if (!["未着手", "進行中"].includes(item.status)) return card;
-    if (recommended) this.el("p", "おすすめの理由：" + this.todayReasons(item, now).join("・"), card);
+    const more = Array.from(card.children).find(child => child.className === "card-more");
+    if (recommended) this.el("p", "おすすめの理由：" + this.todayReasons(item, now).join("・"), more);
     const state = this.todayPreparation(item);
     const application = this.applicationItems(item.company).find(entry => entry.id === item.applicationId);
     this.el("small", application ? `応募：${this.applicationLabel(application)}`
-      : item.applicationId ? "応募：登録情報を確認してください" : "応募：未設定の記録", card, "muted");
-    state.notes.forEach(note => this.el("p", note, card, "muted"));
+      : item.applicationId ? "応募：登録情報を確認してください" : "応募：未設定の記録", more, "muted");
+    state.notes.forEach(note => this.el("p", note, more, "muted"));
     if (state.needsSubmission) {
-      const check = this.el("details", null, card);
+      const check = this.el("details", null, more);
       this.el("summary", "提出前確認・ESを編集", check);
       this.el("p", "記録からの確認です。提出先の案内と照合してください。", check, "muted");
       state.answers.forEach(({ question, answer }) => {
@@ -196,7 +197,7 @@ Object.assign(App, {
     input.addEventListener("keydown", event => {
       if (event.key === "Enter" && !event.isComposing) { event.preventDefault(); add(); }
     });
-    this.el("h3", "次にやる1件", root);
+    this.el("h3", "次にやる1件", root, "today-section-heading");
     const next = this.el("div", null, root, "next-task");
     const task = this.nextTask(now);
     if (task) this.todayTaskCard(next, task, now, true);

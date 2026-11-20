@@ -142,7 +142,8 @@ const originalDeadlineCard = App.deadlineCard;
 App.deadlineCard = function(parent, item, now) {
   const card = originalDeadlineCard.call(this, parent, item, now);
   if (!["auto", "page", "paste"].includes(item.source)) return card;
-  const details = this.el("details", null, card, "card");
+  const more = Array.from(card.children).find(child => (child.className || "").split(/\s+/).includes("card-more"));
+  const details = this.el("details", null, more || card, "card");
   this.el("summary", "取得の根拠・訂正：" + item.title, details);
   this.el("p", "出典URL：" + (item.evidence?.url || item.url || "記録なし"), details);
   this.el("p", "取得日時：" + (item.evidence?.foundAt || "記録なし"), details);
